@@ -5,6 +5,7 @@ import { Colors, Assets, Typography } from '../../../../../components/generalSty
 import { fetchEvaluaciones, saveEvaluacion } from '../../../../../api/firebaseService';
 import { useTableLogic } from '../../../../../hooks/useTableLogic';
 
+
 // HEREDAMOS LOS COMPONENTES REUTILIZABLES CENTRALIZADOS
 import {
     BotonSincronizar,
