@@ -23,11 +23,18 @@ import DesarrolloAcademicoLayout from './desarrollo/DireccionAcademica/subareas/
 import PeriodoSelector from './desarrollo/DireccionAcademica/subareas/DesarrolloAcademico/PeriodoSelector';
 import EvaluacionDocente from './desarrollo/DireccionAcademica/subareas/DesarrolloAcademico/formatos/EvaluacionDocente';
 import EstimuloDesempeño from './desarrollo/DireccionAcademica/subareas/DesarrolloAcademico/formatos/EstimuloDesempeño';
-// NUEVA IMPORTACIÓN
 import AlumnosEventos from './desarrollo/DireccionAcademica/subareas/DesarrolloAcademico/formatos/AlumnosEventos';
 import CapacitacionDocente from './desarrollo/DireccionAcademica/subareas/DesarrolloAcademico/formatos/CapacitacionDocente';
 import PersonalDocente from './desarrollo/DireccionAcademica/subareas/DesarrolloAcademico/formatos/PersonalDocente';
 import Tutorias from './desarrollo/DireccionAcademica/subareas/DesarrolloAcademico/formatos/Tutorias';
+
+// --- IMPORTACIONES DE DEPARTAMENTO DE CENTRO DE CÓMPUTO ---
+import CentroComputoLayout from './desarrollo/DireccionAcademica/subareas/CentroComputo/CentroComputoLayout';
+import AparatosTelefonicos from './desarrollo/DireccionAcademica/subareas/CentroComputo/formatos/AparatosTelefonicos';
+import EducacionEspecial from './desarrollo/DireccionAcademica/subareas/CentroComputo/formatos/EducacionEspecial';
+import RecursosInformaticos from './desarrollo/DireccionAcademica/subareas/CentroComputo/formatos/RecursosInformaticos';
+import TelecomunicacionesHardware from './desarrollo/DireccionAcademica/subareas/CentroComputo/formatos/TelecomunicacionesHardware';
+import TelecomunicacionesSoftware from './desarrollo/DireccionAcademica/subareas/CentroComputo/formatos/TelecomunicacionesSoftware';
 
 /**
  * COMPONENTE: DashboardHome
@@ -83,63 +90,45 @@ function App() {
             <Route path="direccion-academica">
               <Route index element={<AcademicaHome />} />
 
+              {/* --- SUBÁREA: DESARROLLO ACADÉMICO --- */}
               <Route path="desarrollo-academico" element={<DesarrolloAcademicoLayout />}>
-
-                {/* 1. EVALUACIÓN DOCENTE */}
-                <Route path="evaluacion-docente" element={
-                  <PeriodoSelector
-                    tituloFormato="Evaluación Docente"
-                    rutaBase="/dashboard/direccion-academica/desarrollo-academico/evaluacion-docente"
-                  />
-                } />
+                <Route path="evaluacion-docente" element={<PeriodoSelector tituloFormato="Evaluación Docente" rutaBase="/dashboard/direccion-academica/desarrollo-academico/evaluacion-docente" />} />
                 <Route path="evaluacion-docente/:periodoId" element={<EvaluacionDocente />} />
 
-                {/* 2. ALUMNOS EN EVENTOS ACADÉMICOS - CONFIGURACIÓN NUEVA */}
-                <Route path="alumnos-eventos-academicos" element={
-                  <PeriodoSelector
-                    tituloFormato="Alumnos en Eventos Académicos"
-                    rutaBase="/dashboard/direccion-academica/desarrollo-academico/alumnos-eventos-academicos"
-                  />
-                } />
+                <Route path="alumnos-eventos-academicos" element={<PeriodoSelector tituloFormato="Alumnos en Eventos Académicos" rutaBase="/dashboard/direccion-academica/desarrollo-academico/alumnos-eventos-academicos" />} />
                 <Route path="alumnos-eventos-academicos/:periodoId" element={<AlumnosEventos />} />
 
-                {/* 3. Capacitación Personal Docente */}
-                <Route path="capacitacion-personal-docente" element={
-                  <PeriodoSelector
-                    tituloFormato="Capacitación Personal Docente"
-                    rutaBase="/dashboard/direccion-academica/desarrollo-academico/capacitacion-personal-docente"
-                  />
-                } />
+                <Route path="capacitacion-personal-docente" element={<PeriodoSelector tituloFormato="Capacitación Personal Docente" rutaBase="/dashboard/direccion-academica/desarrollo-academico/capacitacion-personal-docente" />} />
                 <Route path="capacitacion-personal-docente/:periodoId" element={<CapacitacionDocente />} />
 
-                {/* 4. Personal Docente que Estudia */}
-                <Route path="personal-docente-estudia" element={
-                  <PeriodoSelector
-                    tituloFormato="Personal Docente que Estudia"
-                    rutaBase="/dashboard/direccion-academica/desarrollo-academico/personal-docente-estudia"
-                  />
-                } />
+                <Route path="personal-docente-estudia" element={<PeriodoSelector tituloFormato="Personal Docente que Estudia" rutaBase="/dashboard/direccion-academica/desarrollo-academico/personal-docente-estudia" />} />
                 <Route path="personal-docente-estudia/:periodoId" element={<PersonalDocente />} />
 
-                {/* 5. ESTÍMULO AL DESEMPEÑO DOCENTE */}
-                <Route path="estimulo-desempeno-docente" element={
-                  <PeriodoSelector
-                    tituloFormato="Estímulo al Desempeño Docente"
-                    rutaBase="/dashboard/direccion-academica/desarrollo-academico/estimulo-desempeno-docente"
-                  />
-                } />
+                <Route path="estimulo-desempeno-docente" element={<PeriodoSelector tituloFormato="Estímulo al Desempeño Docente" rutaBase="/dashboard/direccion-academica/desarrollo-academico/estimulo-desempeno-docente" />} />
                 <Route path="estimulo-desempeno-docente/:periodoId" element={<EstimuloDesempeño />} />
 
-                {/* 6. Tutorías */}
-                <Route path="tutorias" element={
-                  <PeriodoSelector
-                    tituloFormato="Tutorias"
-                    rutaBase="/dashboard/direccion-academica/desarrollo-academico/tutorias"
-                  />
-                } />
+                <Route path="tutorias" element={<PeriodoSelector tituloFormato="Tutorias" rutaBase="/dashboard/direccion-academica/desarrollo-academico/tutorias" />} />
                 <Route path="tutorias/:periodoId" element={<Tutorias />} />
-
               </Route>
+
+              {/* --- SUBÁREA: CENTRO DE CÓMPUTO (NUEVA CONFIGURACIÓN) --- */}
+              <Route path="computo" element={<CentroComputoLayout />}>
+                <Route path="aparatos-telefonicos" element={<PeriodoSelector tituloFormato="Líneas y aparatos Teléfonicos." rutaBase="/dashboard/direccion-academica/computo/aparatos-telefonicos" />} />
+                <Route path="aparatos-telefonicos/:periodoId" element={<AparatosTelefonicos />} />
+
+                <Route path="educacion-especial" element={<PeriodoSelector tituloFormato="Educación Especial" rutaBase="/dashboard/direccion-academica/computo/educacion-especial" />} />
+                <Route path="educacion-especial/:periodoId" element={<EducacionEspecial />} />
+
+                <Route path="recursos-informaticos" element={<PeriodoSelector tituloFormato="Recursos Informáticos" rutaBase="/dashboard/direccion-academica/computo/recursos-informaticos" />} />
+                <Route path="recursos-informaticos/:periodoId" element={<RecursosInformaticos />} />
+
+                <Route path="telecomunicaciones-hardware" element={<PeriodoSelector tituloFormato="Telecomunicaciones Hardware" rutaBase="/dashboard/direccion-academica/computo/telecomunicaciones-hardware" />} />
+                <Route path="telecomunicaciones-hardware/:periodoId" element={<TelecomunicacionesHardware />} />
+
+                <Route path="telecomunicaciones-software" element={<PeriodoSelector tituloFormato="Telecomunicaciones Software" rutaBase="/dashboard/direccion-academica/computo/telecomunicaciones-software" />} />
+                <Route path="telecomunicaciones-software/:periodoId" element={<TelecomunicacionesSoftware />} />
+              </Route>
+
             </Route>
 
             <Route path="*" element={<div>Interfaz en Desarrollo</div>} />
