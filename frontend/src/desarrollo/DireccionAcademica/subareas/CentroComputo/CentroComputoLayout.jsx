@@ -19,7 +19,7 @@ const CentroComputoLayout = () => {
 
     const menuItems = [
         { nombre: "Líneas y aparatos Teléfonicos.", ruta: "aparatos-telefonicos" },
-        { nombre: "Educación Especial", ruta: "educacion-especial" },
+        { nombre: "Infraestructura Educación Especial", ruta: "educacion-especial" },
         { nombre: "Recursos Informáticos", ruta: "recursos-informaticos" },
         { nombre: "Telecomunicaciones Hardware", ruta: "telecomunicaciones-hardware" },
         { nombre: "Telecomunicaciones Software", ruta: "telecomunicaciones-software" }

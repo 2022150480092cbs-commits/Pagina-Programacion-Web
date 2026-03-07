@@ -1,80 +1,81 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import useExport from '../../../../../hooks/useExport';
-import { Colors, Assets, Typography } from '../../../../../components/generalStyle/StylesConfig';
+import { Typography } from '../../../../../components/generalStyle/StylesConfig';
 import { fetchEvaluaciones, saveEvaluacion } from '../../../../../api/firebaseService';
 import { useTableLogic } from '../../../../../hooks/useTableLogic';
 
-// HEREDAMOS LOS COMPONENTES REUTILIZABLES CENTRALIZADOS
 import {
     BotonSincronizar,
     BotonAgregar,
     BotonLimpiar,
-    BotonEliminar,
     BotonNuevaColumna
 } from '../../../../../components/BotonesTablas';
 
-const CapacitacionDocente = () => {
+const RecursosInformaticos = () => {
     const { periodoId } = useParams();
-    const [datos, setDatos] = useState([]);
+    const [datosServidores, setDatosServidores] = useState([]);
+    const [datosConectividad, setDatosConectividad] = useState([]);
     const [loading, setLoading] = useState(true);
     const [actualizando, setActualizando] = useState(false);
 
-    // ESTRUCTURA INICIAL DE COLUMNAS (MÁS DE 8 ACTIVA MODO HORIZONTAL AUTOMÁTICO)
-    const [columnas, setColumnas] = useState([
-        { key: 'curso', label: 'NOMBRE DEL CURSO' },
-        { key: 'diplomado', label: 'NOMBRE DEL DIPLOMADO' },
-        { key: 'institucion', label: 'INSTITUCIÓN QUE LO IMPARTE' },
-        { key: 'instructor', label: 'NOMBRE DEL INSTRUCTOR' },
-        { key: 'duracion', label: 'DURACIÓN' },
-        { key: 'periodo', label: 'PERIODO INICIO Y TERMINO' },
-        { key: 'lugar', label: 'LUGAR' },
-        { key: 'beca', label: 'BECA' },
-        { key: 'tipo', label: 'TIPO DE CURSOS' },
-        { key: 'participante', label: 'NOMBRE DEL PARTICIPANTE' },
-        { key: 'sexo', label: 'SEXO' },
-        { key: 'discapacidad', label: 'CON DISCAPACIDAD' },
-        { key: 'indigena', label: 'HABLANTES DE LENGUAJES INDÍGENAS' },
-        { key: 'programa', label: 'PROGRAMA ACADÉMICO' }
-    ]);
-
-    const { exportToPDF, exportToExcel } = useExport();
     const periodoActual = periodoId || "Septiembre 2025 – Febrero 2026";
+    const { exportToPDF } = useExport();
 
-    // PARÁMETRO DE CONTROL: Activa estética y exportación horizontal
-    const esHorizontal = columnas.length > 8;
+    const colServidores = [
+        { key: 'marca', label: 'MARCA' },
+        { key: 'modelo', label: 'MODELO' },
+        { key: 'plataforma', label: 'PLATAFORMA' },
+        { key: 'arquitectura', label: 'ARQUITECTURA' },
+        { key: 'procesador', label: 'PROCESADOR' },
+        { key: 'memoria', label: 'CAPACIDAD MEMORIA' },
+        { key: 'disco', label: 'CAPACIDAD DISCO' },
+        { key: 'tipo', label: 'TIPO SERVIDOR' },
+        { key: 'monitor', label: 'MONITOR' },
+        { key: 'cache', label: 'CACHE' }
+    ];
 
-    const { handleKeyDown, handleBlurCell } = useTableLogic(datos, setDatos, columnas.length);
+    const colConectividad = [
+        { key: 'tipo', label: 'TIPO' },
+        { key: 'marca', label: 'MARCA' },
+        { key: 'modelo', label: 'MODELO' },
+        { key: 'caracteristicas', label: 'CARACTERÍSTICAS' },
+        { key: 'cantidad', label: 'CANTIDAD' }
+    ];
 
-    useEffect(() => {
-        // ENLAZADO AL FORMATO DE IMPRESIÓN PDF HORIZONTAL
-        const handlePDF = () => exportToPDF(
-            'area-oficial-impresion',
-            `Capacitación Docente - ${periodoActual}`,
-            esHorizontal ? 'landscape' : 'portrait' 
-        );
+    const generarEstructuraBase = () => {
+        const serv = [
+            { id: 'serv-h-joco', marca: 'TES JOCOTITLÁN', esSeparador: true },
+            { id: 'serv-j-1', marca: '', modelo: '', plataforma: '', arquitectura: '', procesador: '', memoria: '', disco: '', tipo: '', monitor: '', cache: '' },
+            { id: 'serv-h-acul', marca: 'EXTENSIÓN ACULCO', esSeparador: true },
+            { id: 'serv-a-1', marca: '', modelo: '', plataforma: '', arquitectura: '', procesador: '', memoria: '', disco: '', tipo: '', monitor: '', cache: '' }
+        ];
+        const conect = [
+            { id: 'con-h-joco', tipo: 'TES JOCOTITLÁN', esSeparador: true },
+            { id: 'con-j-1', tipo: '', marca: '', modelo: '', caracteristicas: '', cantidad: '' },
+            { id: 'con-h-acul', tipo: 'EXTENSIÓN ACULCO', esSeparador: true },
+            { id: 'con-a-1', tipo: '', marca: '', modelo: '', caracteristicas: '', cantidad: '' }
+        ];
+        return { serv, conect };
+    };
 
-        const handleExcel = () => exportToExcel(datos, `Capacitación Docente - ${periodoActual}`);
-        window.addEventListener('descargar-pdf-global', handlePDF);
-        window.addEventListener('descargar-excel-global', handleExcel);
-        return () => {
-            window.removeEventListener('descargar-pdf-global', handlePDF);
-            window.removeEventListener('descargar-excel-global', handleExcel);
-        };
-    }, [datos, periodoActual, esHorizontal]);
+    // NAVEGACIÓN ENTRE CELDAS: Extraemos handleKeyDown para cada tabla
+    const { handleKeyDown: navServ, handleBlurCell: blurServ } = useTableLogic(datosServidores, setDatosServidores, colServidores.length);
+    const { handleKeyDown: navConect, handleBlurCell: blurConect } = useTableLogic(datosConectividad, setDatosConectividad, colConectividad.length);
 
     useEffect(() => {
         const cargarDatos = async () => {
             setLoading(true);
             try {
-                const idDoc = `capacitacion-docente-${periodoActual}`;
-                const registros = await fetchEvaluaciones(idDoc);
-                if (registros && registros.registros) {
-                    setDatos(registros.registros);
+                const idDoc = `recursos-informaticos-${periodoActual}`;
+                const res = await fetchEvaluaciones(idDoc, "centroComputo");
+                const { serv, conect } = generarEstructuraBase();
+                if (res && res.servidores) {
+                    setDatosServidores(res.servidores);
+                    setDatosConectividad(res.conectividad);
                 } else {
-                    const filaInicial = { id: Date.now() };
-                    columnas.forEach(col => filaInicial[col.key] = '');
-                    setDatos([filaInicial]);
+                    setDatosServidores(serv);
+                    setDatosConectividad(conect);
                 }
             } catch (error) { console.error(error); }
             finally { setLoading(false); }
@@ -82,158 +83,122 @@ const CapacitacionDocente = () => {
         cargarDatos();
     }, [periodoActual]);
 
-    // --- ACCIONES HEREDADAS Y DINÁMICAS ---
-    const agregarFila = () => {
-        const nuevaFila = { id: Date.now() };
-        columnas.forEach(col => nuevaFila[col.key] = '');
-        setDatos([...datos, nuevaFila]);
-    };
-
-    const eliminarFila = (id) => {
-        if (datos.length > 1) setDatos(datos.filter(f => f.id !== id));
-    };
-
-    const handleLimpiarTabla = () => {
-        if (window.confirm("¿Deseas vaciar la tabla?")) {
-            const filaLimpia = { id: Date.now() };
-            columnas.forEach(col => filaLimpia[col.key] = '');
-            setDatos([filaLimpia]);
-        }
-    };
-
-    const handleAgregarColumna = () => {
-        const nombre = prompt("Ingrese el nombre del nuevo atributo (Columna):");
-        if (nombre) {
-            const keyNueva = nombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_');
-            setColumnas([...columnas, { key: keyNueva, label: nombre.toUpperCase() }]);
-            // Actualizamos registros existentes para incluir el nuevo campo en blanco
-            setDatos(datos.map(fila => ({ ...fila, [keyNueva]: '' })));
-        }
-    };
-
     const handleSincronizar = async () => {
         setActualizando(true);
         try {
-            await saveEvaluacion({ 
-                id: `capacitacion-docente-${periodoActual}`, 
-                registros: datos, 
+            await saveEvaluacion({
+                id: `recursos-informaticos-${periodoActual}`,
+                servidores: datosServidores,
+                conectividad: datosConectividad,
                 periodo: periodoActual,
-                tipoFormato: "Capacitación Docente" 
-            });
-            alert("¡Registro de capacitación guardado con éxito!");
-        } catch (error) { alert("Error al guardar en la base de datos."); }
+                subarea: "Recursos Informáticos"
+            }, "centroComputo");
+            alert("¡Sincronización exitosa!");
+        } catch (e) { alert("Error al guardar."); }
         finally { setActualizando(false); }
     };
 
-    if (loading) return <div style={{ textAlign: 'center', padding: '50px' }}>Cargando Formato de Capacitación...</div>;
+    if (loading) return <div style={{ textAlign: 'center', padding: '50px' }}>Cargando Recursos Informáticos...</div>;
 
     return (
         <div className="container" style={styles.mainContainer}>
-            <style>
-                {`
-          @media print {
-            @page { 
-              size: ${esHorizontal ? 'landscape' : 'portrait'}; 
-              margin: 0.5cm; 
-            }
-            body { -webkit-print-color-adjust: exact; }
-          }
+            <style>{`
+        @media print {
+          @page { size: landscape; margin: 0.5cm; }
+          .no-print { display: none !important; }
+          #area-impresion { box-shadow: none !important; width: 100% !important; margin: 0 !important; }
+          tr { page-break-inside: avoid; }
+        }
+        /* Estilo para resaltar la celda activa */
+        td[contenteditable="true"]:focus { background-color: #fff9c4 !important; outline: 2px solid #00264D; }
+        
+        td[contenteditable="true"] {
+          user-select: text;
+          -webkit-user-modify: read-write-plaintext-only;
+          word-break: break-word;
+          white-space: normal;
+        }
+      `}</style>
 
-          @media screen { .solo-pdf-captura { position: absolute; left: -9999px; } }
-          .no_imprimir_botones_ia { display: flex; }
-          td[contenteditable="true"]:focus { background-color: #fff9c4 !important; outline: none; }
-          
-          .fila-datos { position: relative; }
-          .contenedor-eliminar {
-            position: absolute;
-            right: -35px;
-            top: 50%;
-            transform: translateY(-50%);
-            opacity: 0;
-            transition: opacity 0.2s ease;
-            z-index: 10;
-          }
-          .fila-datos:hover .contenedor-eliminar { opacity: 1; }
-
-          td[contenteditable="true"] {
-            user-select: text;
-            -webkit-user-modify: read-write-plaintext-only;
-            word-break: break-word;
-            white-space: normal;
-          }
-        `}
-            </style>
-
-            <div id="area-oficial-impresion" style={{
-                ...styles.pageWrapper,
-                maxWidth: esHorizontal ? '1600px' : '1100px' // Se abre hacia las orillas si es horizontal
-            }}>
-
-                <div className="solo-pdf-captura" style={styles.fullImageContainer}>
-                    <img src={Assets.header} alt="Header" style={styles.fullWidthImg} />
-                </div>
-
+            <div id="area-impresion" style={styles.pageWrapper}>
                 <div style={styles.marginContent}>
-                    <div style={styles.contentHeader}>
-                        <h2 style={styles.titlePrincipal}>CAPACITACIÓN PERSONAL DOCENTE</h2>
+
+                    <div style={styles.headerSection}>
+                        <h2 style={styles.titlePrincipal}>LISTADO DE SERVIDORES</h2>
                         <p style={styles.subtitlePeriodo}>Periodo: {periodoActual}</p>
                         <div style={styles.divider} />
                     </div>
 
-                    <div style={styles.tableWrapper}>
-                        <div style={styles.tableContainer}>
-                            <form autoComplete="off" action="none">
-                                <table style={styles.table}>
-                                    <thead>
-                                        <tr style={{ backgroundColor: Colors.barraTitulo || '#00264D', color: 'white' }}>
-                                            <th colSpan={columnas.length} style={styles.thMain}>DETALLE DE CAPACITACIÓN INSTITUCIONAL</th>
-                                        </tr>
-                                        <tr style={{ backgroundColor: Colors.barraTitulo || '#00264D', color: 'white', borderTop: '1px solid rgba(255,255,255,0.2)' }}>
-                                            {columnas.map((col) => (
-                                                <th key={col.key} style={styles.th}>{col.label}</th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {datos.map((fila, index) => (
-                                            <tr key={fila.id} className="fila-datos" style={{ borderBottom: '1px solid #eee' }}>
-                                                {columnas.map((col, colIdx) => (
-                                                    <td
-                                                        key={`${fila.id}-${col.key}`}
-                                                        style={styles.td}
-                                                        contentEditable="true"
-                                                        suppressContentEditableWarning
-                                                        onKeyDown={(e) => handleKeyDown(e, index, colIdx)}
-                                                        onBlur={(e) => handleBlurCell(index, col.key, e.target.innerText)}
-                                                        autoComplete="off"
-                                                        spellCheck="false"
-                                                    >
-                                                        {fila[col.key]}
-                                                    </td>
-                                                ))}
-                                                {/* BOTÓN ELIMINAR FLOTANTE HEREDADO */}
-                                                <div className="contenedor-eliminar no_imprimir_botones_ia">
-                                                    <BotonEliminar onClick={() => eliminarFila(fila.id)} />
-                                                </div>
-                                            </tr>
+                    <div style={styles.tableContainer}>
+                        <table style={styles.table}>
+                            <thead>
+                                <tr style={styles.trHeader}>
+                                    {colServidores.map(col => <th key={col.key} style={styles.th}>{col.label}</th>)}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {datosServidores.map((fila, idx) => (
+                                    <tr key={fila.id} style={{ backgroundColor: fila.esSeparador ? '#f2f2f2' : 'white' }}>
+                                        {colServidores.map((col, colIdx) => (
+                                            <td
+                                                key={col.key}
+                                                style={fila.esSeparador ? styles.tdSeparador : styles.td}
+                                                contentEditable={!fila.esSeparador}
+                                                suppressContentEditableWarning
+                                                onKeyDown={(e) => !fila.esSeparador && navServ(e, idx, colIdx)} // Navegación activada
+                                                onBlur={(e) => !fila.esSeparador && blurServ(idx, col.key, e.target.innerText.trim())}
+                                                spellCheck="false"
+                                            >
+                                                {fila[col.key]}
+                                            </td>
                                         ))}
-                                    </tbody>
-                                </table>
-                            </form>
-                        </div>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
 
-                    {/* BOTONERA REUTILIZABLE DEBAJO DE LA TABLA */}
-                    <div className="no_imprimir_botones_ia" style={styles.buttonContainer}>
-                        <BotonLimpiar onClick={handleLimpiarTabla} />
-                        <BotonNuevaColumna onClick={handleAgregarColumna} />
-                        <BotonAgregar onClick={agregarFila} />
+                    <div style={{ ...styles.headerSection, marginTop: '50px' }}>
+                        <h2 style={styles.titlePrincipal}>DISPOSITIVOS DE CONECTIVIDAD</h2>
+                        <div style={styles.divider} />
+                    </div>
+
+                    <div style={styles.tableContainer}>
+                        <table style={styles.table}>
+                            <thead>
+                                <tr style={styles.trHeader}>
+                                    {colConectividad.map(col => <th key={col.key} style={styles.th}>{col.label}</th>)}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {datosConectividad.map((fila, idx) => (
+                                    <tr key={fila.id} style={{ backgroundColor: fila.esSeparador ? '#f2f2f2' : 'white' }}>
+                                        {colConectividad.map((col, colIdx) => (
+                                            <td
+                                                key={col.key}
+                                                style={fila.esSeparador ? styles.tdSeparador : styles.td}
+                                                contentEditable={!fila.esSeparador}
+                                                suppressContentEditableWarning
+                                                onKeyDown={(e) => !fila.esSeparador && navConect(e, idx, colIdx)} // Navegación activada
+                                                onBlur={(e) => !fila.esSeparador && blurConect(idx, col.key, e.target.innerText.trim())}
+                                                spellCheck="false"
+                                            >
+                                                {fila[col.key]}
+                                            </td>
+                                        ))}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div className="no-print" style={styles.buttonContainer}>
+                        <BotonLimpiar onClick={() => { if (window.confirm("¿Deseas limpiar las tablas?")) { const { serv, conect } = generarEstructuraBase(); setDatosServidores(serv); setDatosConectividad(conect); } }} />
+                        <BotonNuevaColumna onClick={() => alert("Función para columnas adicionales")} />
+                        <BotonAgregar onClick={() => setDatosConectividad([...datosConectividad, { id: Date.now(), tipo: '', marca: '', modelo: '', caracteristicas: '', cantidad: '' }])} />
                         <BotonSincronizar onClick={handleSincronizar} loading={actualizando} />
                     </div>
-                </div>
 
-                <div className="solo-pdf-captura" style={styles.fullImageContainerFooter}>
-                    <img src={Assets.footer} alt="Footer" style={styles.fullWidthImg} />
                 </div>
             </div>
         </div>
@@ -242,30 +207,19 @@ const CapacitacionDocente = () => {
 
 const styles = {
     mainContainer: { width: '100%', display: 'flex', justifyContent: 'center', backgroundColor: '#f5f5f5', padding: '20px 0' },
-    pageWrapper: {
-        backgroundColor: 'white',
-        width: '98%', 
-        margin: '0 auto',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-        boxShadow: '0 0 15px rgba(0,0,0,0.1)'
-    },
-    fullImageContainer: { width: '100%' },
-    fullImageContainerFooter: { width: '100%', marginTop: 'auto' },
-    marginContent: { padding: '20px 2%', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' },
-    fullWidthImg: { width: '100%', display: 'block' },
-    contentHeader: { width: '100%', textAlign: 'center', marginBottom: '20px' },
-    titlePrincipal: { margin: '0', fontSize: '1.2rem', fontWeight: 'bold', color: '#000' },
-    subtitlePeriodo: { margin: '2px 0', fontSize: '1rem', color: '#333' },
+    pageWrapper: { backgroundColor: 'white', width: '98%', maxWidth: '1450px', margin: '0 auto', boxShadow: '0 0 15px rgba(0,0,0,0.1)' },
+    marginContent: { padding: '30px 2%' },
+    headerSection: { textAlign: 'center', marginBottom: '20px' },
+    titlePrincipal: { fontSize: '1.4rem', fontWeight: 'bold', fontFamily: Typography.principal, color: '#000' },
+    subtitlePeriodo: { fontSize: '1rem', color: '#333', marginTop: '5px' },
     divider: { height: '3px', backgroundColor: '#00264D', width: '100%', marginTop: '10px' },
-    tableWrapper: { width: '100%', display: 'flex', justifyContent: 'center' },
-    tableContainer: { width: '100%', border: '1px solid #ccc', borderRadius: '4px', overflow: 'visible' },
-    table: { width: '100%', borderCollapse: 'collapse', tableLayout: 'auto' }, 
-    thMain: { padding: '10px', fontSize: '0.8rem', fontWeight: 'bold' },
-    th: { padding: '6px', textAlign: 'center', fontSize: '0.55rem', borderRight: '1px solid rgba(255,255,255,0.1)', wordWrap: 'break-word' },
-    td: { padding: '6px', textAlign: 'center', fontSize: '0.6rem', outline: 'none', borderRight: '1px solid #eee' },
-    buttonContainer: { display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '25px', width: '100%' }
+    tableContainer: { border: '1px solid #ccc', borderRadius: '4px', overflow: 'hidden', width: '100%' },
+    table: { width: '100%', borderCollapse: 'collapse' },
+    trHeader: { backgroundColor: '#00264D', color: 'white' },
+    th: { padding: '8px 4px', textAlign: 'center', fontSize: '0.6rem', border: '1px solid rgba(255,255,255,0.1)' },
+    td: { padding: '8px', textAlign: 'center', fontSize: '0.7rem', border: '1px solid #eee', minWidth: '70px', outline: 'none' },
+    tdSeparador: { padding: '10px', fontSize: '0.8rem', fontWeight: 'bold', textAlign: 'left', border: '1px solid #ccc' },
+    buttonContainer: { display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '40px' }
 };
 
-export default CapacitacionDocente;
+export default RecursosInformaticos;

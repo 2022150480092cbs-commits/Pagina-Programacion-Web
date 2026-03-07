@@ -1,19 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import useExport from '../../../../../hooks/useExport';
-import { Colors, Assets, Typography } from '../../../../../components/generalStyle/StylesConfig';
+import { Assets, Typography } from '../../../../../components/generalStyle/StylesConfig';
 import { fetchEvaluaciones, saveEvaluacion } from '../../../../../api/firebaseService';
 import { useTableLogic } from '../../../../../hooks/useTableLogic';
 
-// IMPORTACIÓN DEL COMPONENTE CENTRALIZADO DE PROGRAMAS
 import { SelectPrograma } from '../../../../../components/OrdenProgramas/Matricula';
-
-// HEREDAMOS LOS COMPONENTES REUTILIZABLES CENTRALIZADOS
 import {
   BotonSincronizar,
   BotonAgregar,
   BotonLimpiar,
-  BotonEliminar,
   BotonNuevaColumna
 } from '../../../../../components/BotonesTablas';
 
@@ -22,210 +18,177 @@ const AlumnosEventos = () => {
   const [datos, setDatos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actualizando, setActualizando] = useState(false);
-
-  // ESTADO PARA LA NUEVA OFERTA EDUCATIVA (Programas extra)
   const [programasExtra, setProgramasExtra] = useState([]);
 
-  // ESTRUCTURA DE COLUMNAS SEGÚN REFERENCIA
-  const [columnas, setColumnas] = useState([
+  const columnas = [
     { key: 'programa', label: 'PROGRAMA ACADÉMICO' },
     { key: 'nombre', label: 'NOMBRE' },
     { key: 'sexo', label: 'SEXO' },
-    { key: 'area', label: 'ÁREA DE CONOCIMIENTO' },
     { key: 'etapa', label: 'ETAPA' },
     { key: 'fecha', label: 'FECHA' },
     { key: 'resultados', label: 'RESULTADOS' },
     { key: 'observaciones', label: 'OBSERVACIONES' }
-  ]);
+  ];
 
   const { exportToPDF, exportToExcel } = useExport();
   const periodoActual = periodoId || "Septiembre 2025 – Febrero 2026";
 
-  const { handleKeyDown, handleBlurCell } = useTableLogic(datos, setDatos, columnas.length);
-
   useEffect(() => {
-    const handlePDF = () => exportToPDF('area-oficial-impresion', `Alumnos en Eventos - ${periodoActual}`, 'l');
-    const handleExcel = () => exportToExcel(datos, `Alumnos en Eventos - ${periodoActual}`);
+    const handlePDF = () => exportToPDF();
+    const handleExcel = () => exportToExcel(datos, columnas, `Estudiantes en Eventos - ${periodoActual}`);
+
     window.addEventListener('descargar-pdf-global', handlePDF);
     window.addEventListener('descargar-excel-global', handleExcel);
+
     return () => {
       window.removeEventListener('descargar-pdf-global', handlePDF);
       window.removeEventListener('descargar-excel-global', handleExcel);
     };
   }, [datos, periodoActual]);
 
+  const calcularValorFila = (fila, index) => {
+    if (!fila.esSubtotal) return fila.nombre;
+    const filtrar = (idPrefix) => datos.slice(0, index).filter(r => r.id.startsWith(idPrefix) && !r.esSubtotal && r.nombre && r.nombre.trim() !== '').length;
+    if (fila.id === 'joco-SUBTOTAL_LICENCIATURA_ESCOLARIZADA') return filtrar('joco-');
+    if (fila.id === 'acul-TOTAL_EXTENSIÓN_ACULCO') return filtrar('acul-');
+    if (fila.id === 'total-gral-final') return datos.filter(r => !r.esSubtotal && !r.esSeparador && r.nombre && r.nombre.trim() !== '').length;
+    const buscarInicio = (idSub) => datos.findIndex(r => r.id === idSub) + 1;
+    if (fila.id === 'joco-SUBTOTAL_LICENCIATURA_NO_ESCOLARIZADA') return datos.slice(buscarInicio('joco-SUBTOTAL_LICENCIATURA_ESCOLARIZADA'), index).filter(r => !r.esSubtotal && r.nombre && r.nombre.trim() !== '').length;
+    if (fila.id === 'joco-SUBTOTAL_MAESTRÍA') return datos.slice(buscarInicio('joco-SUBTOTAL_LICENCIATURA_NO_ESCOLARIZADA'), index).filter(r => !r.esSubtotal && r.nombre && r.nombre.trim() !== '').length;
+    if (fila.id === 'joco-SUBTOTAL_DOCTORADO') return datos.slice(buscarInicio('joco-SUBTOTAL_MAESTRÍA'), index).filter(r => !r.esSubtotal && r.nombre && r.nombre.trim() !== '').length;
+    return "";
+  };
+
+  const generarEstructuraBase = () => {
+    const listado = [];
+    listado.push({ id: 'header-jocotitlan', programa: 'JOCOTITLÁN', esSeparador: true });
+    const pJoco = ["INGENIERÍA ELECTROMECÁNICA", "INGENIERÍA INDUSTRIAL", "INGENIERÍA EN SISTEMAS COMPUTACIONALES", "INGENIERÍA MECATRÓNICA", "ARQUITECTURA", "CONTADOR PÚBLICO", "INGENIERÍA EN GESTIÓN EMPRESARIAL", "INGENIERÍA QUÍMICA", "INGENIERÍA EN MATERIALES", "INGENIERÍA EN ANIMACIÓN DIGITAL Y EFECTOS VISUALES", "LICENCIATURA EN TURISMO", "INGENIERÍA EN LOGÍSTICA", "SUBTOTAL LICENCIATURA ESCOLARIZADA", "INGENIERÍA INDUSTRIAL NO ESCOLARIZADA", "SUBTOTAL LICENCIATURA NO ESCOLARIZADA", "MAESTRÍA EN INGENIERÍA", "MAESTRÍA EN INTELIGENCIA ARTIFICIAL", "SUBTOTAL MAESTRÍA", "DOCTORADO EN CIENCIAS DE LA INGENIERÍA", "SUBTOTAL DOCTORADO"];
+    pJoco.forEach(p => listado.push({ id: `joco-${p.replace(/\s+/g, '_')}`, programa: p, nombre: '', sexo: '', etapa: '', fecha: '', resultados: '', observaciones: '', esSubtotal: p.includes("SUBTOTAL") }));
+    listado.push({ id: 'header-aculco', programa: 'ACULCO', esSeparador: true });
+    const pAcul = ["CONTADOR PÚBLICO", "INGENIERÍA INDUSTRIAL", "INGENIERÍA EN SISTEMAS COMPUTACIONALES", "LICENCIATURA EN TURISMO", "TOTAL EXTENSIÓN ACULCO"];
+    pAcul.forEach(p => listado.push({ id: `acul-${p.replace(/\s+/g, '_')}`, programa: p, nombre: '', sexo: '', etapa: '', fecha: '', resultados: '', observaciones: '', esSubtotal: p.includes("TOTAL") }));
+    listado.push({ id: 'total-gral-final', programa: 'TOTAL MATRÍCULA', esSubtotal: true });
+    return listado;
+  };
+
+  const { handleKeyDown, handleBlurCell } = useTableLogic(datos, setDatos, columnas.length);
+
   useEffect(() => {
     const cargarDatos = async () => {
       setLoading(true);
       try {
         const idDoc = `alumnos-eventos-${periodoActual}`;
-        const registros = await fetchEvaluaciones(idDoc);
-        if (registros && registros.registros) {
-          setDatos(registros.registros);
-          // Si hay programas que no están en la lista oficial, los cargamos como extra
-          if (registros.programasExtra) setProgramasExtra(registros.programasExtra);
-        } else {
-          const filaInicial = { id: Date.now() };
-          columnas.forEach(col => filaInicial[col.key] = '');
-          setDatos([filaInicial]);
-        }
-      } catch (error) { console.error("Error:", error); }
+        const res = await fetchEvaluaciones(idDoc, "centroComputo");
+        const base = generarEstructuraBase();
+        if (res && res.registros) {
+          const fusion = base.map(b => {
+            const g = res.registros.find(r => r.id === b.id);
+            return g ? { ...b, ...g } : b;
+          });
+          setDatos(fusion);
+        } else { setDatos(base); }
+      } catch (error) { console.error(error); }
       finally { setLoading(false); }
     };
     cargarDatos();
   }, [periodoActual]);
 
-  const agregarFila = () => {
-    const nuevaFila = { id: Date.now() };
-    columnas.forEach(col => nuevaFila[col.key] = '');
-    setDatos([...datos, nuevaFila]);
-  };
-
-  const eliminarFila = (id) => {
-    if (datos.length > 1) setDatos(datos.filter(f => f.id !== id));
-  };
-
-  const handleLimpiarTabla = () => {
-    if (window.confirm("¿Deseas vaciar la tabla de Alumnos en Eventos?")) {
-      const filaLimpia = { id: Date.now() };
-      columnas.forEach(col => filaLimpia[col.key] = '');
-      setDatos([filaLimpia]);
-    }
-  };
-
-  // REUTILIZAMOS ESTE BOTÓN PARA AMPLIAR LA OFERTA EDUCATIVA
-  const handleAgregarOfertaEducativa = () => {
-    const nombre = prompt("Ingrese el nombre del nuevo programa académico para la oferta educativa:");
-    if (nombre) {
-      setProgramasExtra([...programasExtra, nombre.toUpperCase()]);
-    }
-  };
-
   const handleSincronizar = async () => {
     setActualizando(true);
     try {
-      await saveEvaluacion({
-        id: `alumnos-eventos-${periodoActual}`,
-        registros: datos,
-        programasExtra: programasExtra, // Guardamos los nuevos programas creados
-        periodo: periodoActual,
-        tipoFormato: "Alumnos en Eventos Académicos"
-      });
-      alert("¡Datos guardados con éxito!");
+      await saveEvaluacion({ id: `alumnos-eventos-${periodoActual}`, registros: datos, periodo: periodoActual, area: "Centro de Cómputo", subarea: "Estudiantes en Eventos Académicos" }, "centroComputo");
+      alert("¡Datos sincronizados!");
     } catch (error) { alert("Error al guardar."); }
     finally { setActualizando(false); }
   };
 
-  if (loading) return <div style={{ textAlign: 'center', padding: '50px' }}>Cargando tabla de eventos...</div>;
+  if (loading) return <div style={{ textAlign: 'center', padding: '50px' }}>Cargando...</div>;
 
   return (
     <div className="container" style={styles.mainContainer}>
-      <style>
-        {`
-          @media screen { .solo-pdf-captura { position: absolute; left: -9999px; } }
-          .no_imprimir_botones_ia { display: flex; }
+      <style>{`
+        @media print {
+          @page { size: landscape; margin: 0; }
+          .no_imprimir_botones_ia { display: none !important; }
+          body { background: white !important; -webkit-print-color-adjust: exact; }
+          
+          /* HEADER Y FOOTER FIJOS EN CADA HOJA */
+          .print-header { position: fixed; top: 0; left: 0; width: 100%; height: 120px; }
+          .print-footer { position: fixed; bottom: 0; left: 0; width: 100%; height: 100px; }
+          
+          /* MARGEN PARA QUE LA TABLA NO CHOQUE CON EL HEADER/FOOTER */
+          .margin-content-print { 
+            padding-top: 130px !important; 
+            padding-bottom: 110px !important; 
+            width: 95% !important; 
+            margin: auto; 
+          }
+          
+          tr { page-break-inside: avoid; break-inside: avoid; }
+          thead { display: table-header-group; }
+          #area-oficial-impresion { box-shadow: none !important; width: 100% !important; }
+        }
+        
+        @media screen {
+          .solo-print { display: none; }
           td[contenteditable="true"]:focus { background-color: #fff9c4 !important; outline: none; }
-          .fila-datos { position: relative; }
-          .contenedor-eliminar {
-            position: absolute;
-            right: -35px;
-            top: 50%;
-            transform: translateY(-50%);
-            opacity: 0;
-            transition: opacity 0.2s ease;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-          .fila-datos:hover .contenedor-eliminar { opacity: 1; }
-          td[contenteditable="true"] {
-            user-select: text;
-            -webkit-user-modify: read-write-plaintext-only;
-            word-break: break-word;
-            overflow-wrap: break-word;
-            white-space: normal;
-          }
-        `}
-      </style>
+          td[contenteditable="true"] { word-break: break-word; white-space: normal; }
+        }
+      `}</style>
 
       <div id="area-oficial-impresion" style={styles.pageWrapper}>
-        <div className="solo-pdf-captura" style={styles.fullImageContainer}>
-          <img src={Assets.header} alt="Header" style={styles.fullWidthImg} />
-        </div>
+        {/* HEADER */}
+        <div className="solo-print print-header"><img src={Assets.header} alt="H" style={{ width: '100%' }} /></div>
 
-        <div style={styles.marginContent}>
+        <div style={styles.marginContent} className="margin-content-print">
           <div style={styles.contentHeader}>
-            <h2 style={styles.titlePrincipal}>ALUMNOS EN EVENTOS ACADÉMICOS</h2>
+            <h2 style={styles.titlePrincipal}>ESTUDIANTES EN EVENTOS ACADÉMICOS</h2>
             <p style={styles.subtitlePeriodo}>Periodo: {periodoActual}</p>
             <div style={styles.divider} />
           </div>
 
-          <div style={styles.tableWrapper}>
-            <div style={styles.tableContainer}>
-              <form autoComplete="off" action="none">
-                <table style={styles.table}>
-                  <thead>
-                    <tr style={{ backgroundColor: Colors.barraTitulo || '#00264D', color: 'white' }}>
-                      <th colSpan={columnas.length} style={styles.thMain}>CIENCIAS BÁSICAS</th>
-                    </tr>
-                    <tr style={{ backgroundColor: Colors.barraTitulo || '#00264D', color: 'white', borderTop: '1px solid rgba(255,255,255,0.2)' }}>
-                      {columnas.map((col) => (
-                        <th key={col.key} style={styles.th}>{col.label}</th>
+          <div style={styles.tableContainer}>
+            <table style={styles.table}>
+              <thead>
+                <tr style={{ backgroundColor: '#00264D', color: 'white' }}>
+                  {columnas.map(col => <th key={col.key} style={styles.th}>{col.label}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {datos.map((fila, index) => {
+                  const esFijo = fila.esSubtotal || fila.esSeparador;
+                  return (
+                    <tr key={fila.id} style={{ backgroundColor: esFijo ? '#f2f2f2' : '#ffffff', fontWeight: esFijo ? 'bold' : 'normal', borderBottom: '1px solid #eee' }}>
+                      <td style={styles.tdPrograma} className="celda-espaciada">
+                        {esFijo || fila.id.startsWith('joco-') || fila.id.startsWith('acul-') ? (
+                          <div style={{ padding: '8px', fontSize: '0.7rem' }}>{fila.programa}</div>
+                        ) : (<SelectPrograma value={fila.programa} onChange={v => handleBlurCell(index, 'programa', v)} />)}
+                      </td>
+                      <td style={styles.tdNombre} className="celda-espaciada" contentEditable={!esFijo} suppressContentEditableWarning onBlur={(e) => !esFijo && handleBlurCell(index, 'nombre', e.target.innerText.trim())}>
+                        {calcularValorFila(fila, index)}
+                      </td>
+                      {columnas.slice(2).map((col, cIdx) => (
+                        <td key={col.key} style={col.key === 'fecha' ? styles.tdFecha : styles.td} className="celda-espaciada" contentEditable={!esFijo} suppressContentEditableWarning onBlur={(e) => !esFijo && handleBlurCell(index, col.key, e.target.innerText.trim())}>
+                          {fila[col.key]}
+                        </td>
                       ))}
                     </tr>
-                  </thead>
-                  <tbody>
-                    {datos.map((fila, index) => (
-                      <tr key={fila.id} className="fila-datos" style={{ borderBottom: '1px solid #eee' }}>
-
-                        {/* COLUMNA 1: SELECT DE PROGRAMAS CENTRALIZADO */}
-                        <td style={styles.tdNombre}>
-                          <SelectPrograma
-                            value={fila.programa}
-                            onChange={(valor) => handleBlurCell(index, 'programa', valor)}
-                            programasExtra={programasExtra}
-                          />
-                        </td>
-
-                        {/* RESTO DE COLUMNAS EDITABLES */}
-                        {columnas.slice(1).map((col, colIdx) => (
-                          <td
-                            key={`${fila.id}-${col.key}`}
-                            style={styles.td}
-                            contentEditable="true"
-                            suppressContentEditableWarning
-                            onKeyDown={(e) => handleKeyDown(e, index, colIdx + 1)}
-                            onBlur={(e) => handleBlurCell(index, col.key, e.target.innerText)}
-                            spellCheck="false"
-                          >
-                            {fila[col.key]}
-                          </td>
-                        ))}
-                        <td className="no_imprimir_botones_ia" style={{ width: '0', padding: '0', border: 'none', position: 'relative' }}>
-                          <div className="contenedor-eliminar">
-                            <BotonEliminar onClick={() => eliminarFila(fila.id)} />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </form>
-            </div>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
 
           <div className="no_imprimir_botones_ia" style={styles.buttonContainer}>
-            <BotonLimpiar onClick={handleLimpiarTabla} />
-            <BotonNuevaColumna onClick={handleAgregarOfertaEducativa} texto="Nueva Oferta" />
-            <BotonAgregar onClick={agregarFila} />
+            <BotonLimpiar onClick={() => setDatos(generarEstructuraBase())} />
+            <BotonNuevaColumna onClick={() => { const n = prompt("P:"); if (n) setProgramasExtra([...programasExtra, n.toUpperCase()]) }} />
+            <BotonAgregar onClick={() => setDatos([...datos, { id: `extra-${Date.now()}`, programa: '', nombre: '' }])} />
             <BotonSincronizar onClick={handleSincronizar} loading={actualizando} />
           </div>
         </div>
 
-        <div className="solo-pdf-captura" style={styles.fullImageContainerFooter}>
-          <img src={Assets.footer} alt="Footer" style={styles.fullWidthImg} />
-        </div>
+        {/* FOOTER */}
+        <div className="solo-print print-footer"><img src={Assets.footer} alt="F" style={{ width: '100%' }} /></div>
       </div>
     </div>
   );
@@ -233,23 +196,20 @@ const AlumnosEventos = () => {
 
 const styles = {
   mainContainer: { width: '100%', display: 'flex', justifyContent: 'center', backgroundColor: '#f5f5f5', padding: '20px 0' },
-  pageWrapper: { backgroundColor: 'white', width: '100%', maxWidth: '1400px', margin: '0 auto', display: 'flex', flexDirection: 'column', minHeight: '297mm', position: 'relative', boxShadow: '0 0 15px rgba(0,0,0,0.1)' },
-  fullImageContainer: { width: '100%' },
-  fullImageContainerFooter: { width: '100%', marginTop: 'auto' },
+  pageWrapper: { backgroundColor: 'white', width: '100%', maxWidth: '1400px', margin: '0 auto', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: '0 0 15px rgba(0,0,0,0.1)' },
   marginContent: { padding: '20px 1cm', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' },
-  fullWidthImg: { width: '100%', display: 'block' },
-  contentHeader: { textAlign: 'center', marginBottom: '20px', width: '100%' },
-  titlePrincipal: { margin: '0', fontSize: '1.4rem', fontWeight: 'bold', color: '#000' },
-  subtitlePeriodo: { margin: '2px 0', fontSize: '1rem', color: '#333' },
+  contentHeader: { textAlign: 'center', width: '100%', marginBottom: '20px' },
+  titlePrincipal: { margin: '0', fontSize: '1.4rem', fontWeight: 'bold', fontFamily: Typography.principal },
+  subtitlePeriodo: { margin: '5px 0', fontSize: '1rem', color: '#333', fontFamily: Typography.principal },
   divider: { height: '3px', backgroundColor: '#00264D', width: '100%', marginTop: '10px' },
-  tableWrapper: { width: '100%', display: 'flex', justifyContent: 'center' },
-  tableContainer: { border: '1px solid #ccc', borderRadius: '4px', overflow: 'visible', width: '100%' },
-  table: { width: '100%', borderCollapse: 'collapse', tableLayout: 'auto' },
-  thMain: { padding: '10px', fontSize: '0.9rem', fontWeight: 'bold' },
-  th: { padding: '12px', textAlign: 'center', fontSize: '0.65rem', borderRight: '1px solid rgba(255,255,255,0.1)' },
-  tdNombre: { padding: '5px', fontSize: '0.75rem', textAlign: 'left', borderRight: '1px solid #eee', minWidth: '220px' },
-  td: { padding: '8px', textAlign: 'center', fontSize: '0.75rem', outline: 'none', borderRight: '1px solid #eee' },
-  buttonContainer: { display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '25px', width: '100%' }
+  tableContainer: { border: '1px solid #ccc', borderRadius: '4px', overflow: 'hidden', width: '100%' },
+  table: { width: '100%', borderCollapse: 'collapse' },
+  th: { padding: '12px', textAlign: 'center', fontSize: '0.6rem', borderRight: '1px solid rgba(255,255,255,0.1)' },
+  tdPrograma: { padding: '12px 8px', fontSize: '0.7rem', borderRight: '1px solid #eee', minWidth: '320px', lineHeight: '1.3', verticalAlign: 'middle' },
+  tdNombre: { padding: '12px 8px', fontSize: '0.7rem', borderRight: '1px solid #eee', minWidth: '220px', lineHeight: '1.3', verticalAlign: 'middle' },
+  tdFecha: { padding: '12px 8px', textAlign: 'center', fontSize: '0.7rem', borderRight: '1px solid #eee', minWidth: '130px', lineHeight: '1.3', verticalAlign: 'middle' },
+  td: { padding: '12px 8px', textAlign: 'center', fontSize: '0.7rem', outline: 'none', borderRight: '1px solid #eee', lineHeight: '1.3', verticalAlign: 'middle', minWidth: '100px' },
+  buttonContainer: { display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '30px', width: '100%' }
 };
 
 export default AlumnosEventos;

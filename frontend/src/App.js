@@ -116,7 +116,7 @@ function App() {
                 <Route path="aparatos-telefonicos" element={<PeriodoSelector tituloFormato="Líneas y aparatos Teléfonicos." rutaBase="/dashboard/direccion-academica/computo/aparatos-telefonicos" />} />
                 <Route path="aparatos-telefonicos/:periodoId" element={<AparatosTelefonicos />} />
 
-                <Route path="educacion-especial" element={<PeriodoSelector tituloFormato="Educación Especial" rutaBase="/dashboard/direccion-academica/computo/educacion-especial" />} />
+                <Route path="educacion-especial" element={<PeriodoSelector tituloFormato="Infraestructura Educación Especial" rutaBase="/dashboard/direccion-academica/computo/educacion-especial" />} />
                 <Route path="educacion-especial/:periodoId" element={<EducacionEspecial />} />
 
                 <Route path="recursos-informaticos" element={<PeriodoSelector tituloFormato="Recursos Informáticos" rutaBase="/dashboard/direccion-academica/computo/recursos-informaticos" />} />

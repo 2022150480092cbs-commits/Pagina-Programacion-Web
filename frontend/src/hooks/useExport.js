@@ -5,18 +5,18 @@ import { saveAs } from 'file-saver';
 
 const useExport = () => {
 
-  // Agregamos el parámetro 'orientacion' que por defecto es 'p' (portrait/vertical)
   const exportToPDF = async (elementId, tituloArchivo, orientacion = 'p') => {
     const element = document.getElementById(elementId);
     if (!element) return;
 
     try {
+      // Configuramos el canvas manteniendo tu escala y calidad original
       const canvas = await html2canvas(element, {
-        scale: 3, // Máxima nitidez
+        scale: 3,
         useCORS: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          // Aseguramos que los logos se expandan en la captura
+          // Mantenemos tu lógica de logos y botones original
           const logos = clonedDoc.getElementsByClassName('solo-pdf-captura');
           for (let logo of logos) {
             logo.style.position = 'static';
@@ -24,7 +24,6 @@ const useExport = () => {
             logo.style.visibility = 'visible';
             logo.style.height = 'auto';
           }
-          // OCULTAMOS TODOS LOS BOTONES E INTERFACES EN EL PDF
           const botonesContenedores = clonedDoc.querySelectorAll('.no_imprimir_botones_ia');
           botonesContenedores.forEach(contenedor => {
             contenedor.style.display = 'none';
@@ -34,12 +33,31 @@ const useExport = () => {
 
       const imgData = canvas.toDataURL('image/png');
 
-      // Ajustamos la creación del PDF para usar la orientación recibida ('p' o 'l')
+      // Definimos el formato A4
       const pdf = new jsPDF(orientacion, 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
 
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      // Calculamos dimensiones de la imagen para que encaje en el ancho
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // PRIMERA PÁGINA
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // PÁGINAS ADICIONALES (Si el contenido es más largo que una hoja A4)
+      // Esto evita que tu tabla se corte y agrega las hojas necesarias
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight; // Desplazamos la imagen hacia arriba
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
       pdf.save(`${tituloArchivo}.pdf`);
     } catch (error) {
       console.error("Error PDF:", error);
@@ -50,9 +68,8 @@ const useExport = () => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Evaluación');
 
-    // --- INSERTAR LOGO ---
     try {
-      const response = await fetch('/assets/logo_tesjo.jpg'); // Ruta de tu logo
+      const response = await fetch('/assets/logo_tesjo.jpg');
       const blob = await response.blob();
       const arrayBuffer = await blob.arrayBuffer();
       const logoId = workbook.addImage({
@@ -65,10 +82,8 @@ const useExport = () => {
       });
     } catch (e) { console.warn("No se pudo cargar el logo en Excel"); }
 
-    // Configuración de espacio para el logo
     worksheet.getRow(1).height = 50;
 
-    // Título y Columnas
     worksheet.mergeCells('A2:C2');
     worksheet.getCell('A2').value = tituloArchivo.toUpperCase();
     worksheet.getCell('A2').font = { bold: true, size: 14 };
@@ -80,7 +95,6 @@ const useExport = () => {
       { header: 'TOTAL DOCENTES', key: 't', width: 15 },
     ];
 
-    // Formato de tabla (Fila 4 para dejar aire al logo)
     const headerRow = worksheet.getRow(4);
     headerRow.values = ['PROGRAMA ACADÉMICO', 'CALIFICACIÓN', 'TOTAL DE DOCENTES'];
     headerRow.eachCell(cell => {
@@ -90,7 +104,8 @@ const useExport = () => {
     });
 
     datos.forEach(item => {
-      const row = worksheet.addRow([item.programaAcademico, item.calificacion, item.totalDocentes]);
+      // Ajustado para mapear correctamente tus campos
+      const row = worksheet.addRow([item.programa, item.resultados, item.nombre]);
       row.getCell(2).alignment = { horizontal: 'center' };
       row.getCell(3).alignment = { horizontal: 'center' };
     });

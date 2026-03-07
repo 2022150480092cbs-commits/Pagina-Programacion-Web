@@ -76,7 +76,7 @@ const DesarrolloAcademicoLayout = () => {
                             }}
                         >
                             <span style={bulletStyle}></span>
-                            Alumnos en Eventos Académicos.
+                            Estudiantes Eventos Académicos.
                         </button>
 
                         {/* 3. Capacitación Personal Docente */}
