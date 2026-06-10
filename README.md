@@ -1,7 +1,4 @@
-========================================================================
-    PSICEI - PROGRAMA PARA LA SISTEMATIZACIÓN Y CONSOLIDACIÓN 
-              DE LA ESTADÍSTICA INSTITUCIONAL (TESJo)
-========================================================================
+PSICEI - PROGRAMA PARA LA SISTEMATIZACIÓN Y CONSOLIDACIÓN DE LA ESTADÍSTICA INSTITUCIONAL (TESJo)
 
 Este archivo contiene la información general del proyecto, las tecnologías
 empleadas, instrucciones para su instalación y los integrantes del equipo.
