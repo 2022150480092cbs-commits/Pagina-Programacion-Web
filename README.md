@@ -87,6 +87,5 @@ El desarrollo de este sistema está a cargo de:
 * Juan Carlo Morales
 * Guastavo Felix Mauricio
 
-========================================================================
                          TESJo - 2025/2026
-========================================================================
+
