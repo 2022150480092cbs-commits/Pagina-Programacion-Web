@@ -1,12 +1,6 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
+import { auth, microsoftProvider, db } from "./firebaseConfig";
+import { signInWithPopup } from "firebase/auth";
 import {
-  getAuth,
-  GoogleAuthProvider,
-  OAuthProvider,
-  signInWithPopup
-} from "firebase/auth";
-import {
-  getFirestore,
   collection,
   addDoc,
   getDocs,
@@ -19,35 +13,7 @@ import {
   serverTimestamp
 } from "firebase/firestore";
 
-// 1. CONFIGURACIÓN (Variables de entorno)
-const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_FIREBASE_APP_ID,
-  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
-};
-
-// 2. INICIALIZACIÓN (Evita el error de '[DEFAULT] already exists')
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-
-// 3. PROVEEDORES
-const googleProvider = new GoogleAuthProvider();
-export const microsoftProvider = new OAuthProvider('microsoft.com');
-
-microsoftProvider.setCustomParameters({
-  prompt: 'select_account',
-  tenant: 'common'
-});
-
 const COLLECTION_NAME = "evaluaciones_docentes";
-
-// --- TUS FUNCIONES ORIGINALES CORREGIDAS ---
 
 export const saveEvaluacion = async (data) => {
   try {
@@ -97,8 +63,6 @@ export const saveEvaluacion = async (data) => {
 
 export const fetchEvaluaciones = async (periodoOrId) => {
   try {
-    if (!periodoOrId) return [];
-
     // Intentar como ID de Documento
     const docRef = doc(db, COLLECTION_NAME, periodoOrId);
     const docSnap = await getDoc(docRef);
@@ -124,22 +88,7 @@ export const loginWithMicrosoft = async () => {
     const result = await signInWithPopup(auth, microsoftProvider);
     return result.user;
   } catch (error) {
-    if (error.code === 'auth/popup-closed-by-user') {
-      console.warn("Popup cerrado por el usuario");
-      return null;
-    }
     console.error("Error en login:", error);
-    throw error;
-  }
-};
-
-// Exportación adicional para el extractor de Gemini
-export const signInWithGoogle = async () => {
-  try {
-    const result = await signInWithPopup(auth, googleProvider);
-    return result.user;
-  } catch (error) {
-    if (error.code === 'auth/popup-closed-by-user') return null;
     throw error;
   }
 };

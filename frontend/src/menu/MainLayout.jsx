@@ -1,5 +1,3 @@
-// /frontend/src/layouts/MainLayout.jsx
-
 import React, { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Colors, Assets, Typography } from '../components/generalStyle/StylesConfig';
@@ -31,83 +29,45 @@ const MainLayout = () => {
         }
     };
 
-    // Función para activar el extractor de datos
-    const handleExtraerIA = () => {
-        window.dispatchEvent(new CustomEvent('extraer-ia-global'));
-    };
-
     return (
         <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            minHeight: '100vh',
-            fontFamily: Typography.family.principal,
-            backgroundColor: Colors.fondoGris,
+            display: 'flex', flexDirection: 'column', minHeight: '335mm',
+            fontFamily: Typography.principal, backgroundColor: Colors.fondoGris,
             position: 'relative'
         }}>
-
+            
+            {/* 💡 ESTE BLOQUE ES LA SOLUCIÓN DEFINITIVA 💡 */}
             <style>
                 {`
                     @media print {
+                        /* Escondemos el header y el título del Layout solo al imprimir */
                         .header-layout-oficial, 
                         .titulo-layout-oficial,
                         footer {
                             display: none !important;
                         }
                     }
-                    body, button, span, p, h1, h2, h3 {
-                        font-family: ${Typography.family.principal} !important;
-                    }
                 `}
             </style>
 
+            {/* Agregamos la clase 'header-layout-oficial' */}
             <header className="header-layout-oficial" style={{ width: '100%', margin: 0, padding: 0, backgroundColor: Colors.institucional }}>
                 <img src={Assets.header} alt="Encabezado TESJO" style={{ width: '100%', display: 'block', objectFit: 'cover' }} />
             </header>
 
             <div style={{
-                width: '100%',
-                backgroundColor: Colors.barraTitulo || '#00264D',
-                height: '60px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '0 30px',
-                color: Colors.textoBlanco,
-                boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-                position: 'relative',
-                zIndex: 1000
+                width: '100%', backgroundColor: Colors.secundario || '#00264D',
+                height: '60px', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', padding: '0 30px',
+                color: Colors.textoBlanco, boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+                position: 'relative', zIndex: 1000
             }}>
-                <h1 className="titulo-layout-oficial" style={{
-                    ...Typography.titlePrincipal,
-                    color: Colors.textoBlanco,
-                    fontSize: '1.2rem',
-                    margin: 0,
-                    textTransform: 'uppercase',
-                    letterSpacing: '1px'
-                }}>
+                {/* Agregamos la clase 'titulo-layout-oficial' */}
+                <h1 className="titulo-layout-oficial" style={{ fontSize: '1.2rem', fontWeight: 'bold', margin: 0, textAlign: 'center', textTransform: 'uppercase', letterSpacing: '1px' }}>
                     Tecnológico de Estudios Superiores de Jocotitlán
                 </h1>
 
                 <div style={{ position: 'absolute', right: '40px', display: 'flex', alignItems: 'center', gap: '15px' }}>
-
-                    {/* BOTÓN NUEVO: EXTRACCIÓN DE DATOS IA (Solo visible en tablas) */}
-                    {esVistaDeTabla && (
-                        <div
-                            onClick={handleExtraerIA}
-                            style={{
-                                ...actionButtonStyle,
-                                background: 'linear-gradient(135deg, #1c3170 0%, #2d88ff 100%)'
-                            }}
-                            title="Extraer datos de PDF con IA"
-                        >
-                            <svg width="22" height="22" fill="white" viewBox="0 0 16 16">
-                                <path d="M9.5 2.672a.5.5 0 1 0 1 0V.843a.5.5 0 0 0-1 0v1.829Zm4.5.035a.5.5 0 0 0-.853-.354l-1.293 1.293a.5.5 0 0 0 .707.707l1.293-1.293a.5.5 0 0 0 .146-.353Zm-7 1.15a.5.5 0 0 0-.707 0L5.001 5.15a.5.5 0 0 0 .707.707l1.293-1.292a.5.5 0 0 0 0-.708ZM13.293 11.293a.5.5 0 0 1 .707.707l-1.293 1.293a.5.5 0 0 1-.707-.707l1.293-1.293ZM2.672 9.5a.5.5 0 0 1 0 1h-1.83a.5.5 0 0 1 0-1h1.83Zm.035-4.5a.5.5 0 0 1 .354.853l-1.293 1.293a.5.5 0 0 1-.707-.707l1.293-1.293a.5.5 0 0 1 .353-.146Z" />
-                                <path d="M8 12.25A4.25 4.25 0 1 0 8 3.75a4.25 4.25 0 0 0 0 8.5Z" />
-                            </svg>
-                        </div>
-                    )}
-
                     {esVistaDeTabla && (
                         <div
                             style={{ position: 'relative' }}
@@ -122,8 +82,8 @@ const MainLayout = () => {
                             </div>
                             {showDownloads && (
                                 <div style={dropdownMenuStyle}>
-                                    <button style={{ ...menuOptionStyle, fontFamily: Typography.family.principal }} onClick={() => window.dispatchEvent(new Event('descargar-pdf-global'))}>📄 Descargar PDF</button>
-                                    <button style={{ ...menuOptionStyle, fontFamily: Typography.family.principal }} onClick={() => window.dispatchEvent(new Event('descargar-excel-global'))}>📊 Descargar Excel</button>
+                                    <button style={menuOptionStyle} onClick={() => window.dispatchEvent(new Event('descargar-pdf-global'))}>📄 Descargar PDF</button>
+                                    <button style={menuOptionStyle} onClick={() => window.dispatchEvent(new Event('descargar-excel-global'))}>📊 Descargar Excel</button>
                                 </div>
                             )}
                         </div>
@@ -131,7 +91,7 @@ const MainLayout = () => {
 
                     <div
                         onClick={() => setShowChatIA(!showChatIA)}
-                        style={{ ...actionButtonStyle, background: Colors.iaGradient || 'linear-gradient(135deg, #1c3170 0%, #2d88ff 100%)', position: 'relative' }}
+                        style={{ ...actionButtonStyle, background: 'linear-gradient(135deg, #1c3170 0%, #2d88ff 100%)', position: 'relative' }}
                         title="Asistente IA"
                     >
                         <img src={Assets.iconIA} alt="IA" style={{ width: '22px', height: '22px' }} />
@@ -158,11 +118,11 @@ const MainLayout = () => {
                         </div>
                         {showMenu && (
                             <div style={dropdownMenuStyle}>
-                                <strong style={{ color: Colors.institucional, fontSize: '14px', display: 'block', marginBottom: '5px', fontFamily: Typography.family.principal }}>
+                                <strong style={{ color: Colors.institucional, fontSize: '14px', display: 'block', marginBottom: '5px' }}>
                                     Cristian Bautista
                                 </strong>
-                                <button style={{ ...menuOptionStyle, fontFamily: Typography.family.principal }}>⚙️ Configuración</button>
-                                <button onClick={() => navigate('/')} style={{ ...menuOptionStyle, color: 'red', fontFamily: Typography.family.principal }}>↪️ Cerrar Sesión</button>
+                                <button style={menuOptionStyle}>⚙️ Configuración</button>
+                                <button onClick={() => navigate('/')} style={{ ...menuOptionStyle, color: 'red' }}>↪️ Cerrar Sesión</button>
                             </div>
                         )}
                     </div>
@@ -191,7 +151,7 @@ const MainLayout = () => {
             )}
 
             <footer style={{ width: '100%', marginTop: 'auto' }}>
-                <div style={{ backgroundColor: Colors.institucional, color: 'white', textAlign: 'center', padding: '10px 0', fontSize: '0.8rem', fontFamily: Typography.family.principal }}>
+                <div style={{ backgroundColor: Colors.institucional, color: 'white', textAlign: 'center', padding: '10px 0', fontSize: '0.8rem' }}>
                     © Copyright 2025 TecNM - Todos los Derechos Reservados
                 </div>
                 <img src={Assets.footer} alt="Footer" style={{ width: '100%', display: 'block' }} />

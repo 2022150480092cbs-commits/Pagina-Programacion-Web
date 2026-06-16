@@ -1,54 +1,55 @@
+// frontend/src/GlobalStyles.jsx
 import React from 'react';
 
 const GlobalStyles = () => (
     <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
-
-        /* 1. REGLA UNIVERSAL: Todo a Montserrat por defecto */
-        * {
-            box-sizing: border-box;
-            font-family: 'Montserrat', sans-serif !important;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
         body {
             margin: 0;
             padding: 0;
+            font-family: 'Inter', sans-serif;
             background: linear-gradient(to right, #BCBBBA, #777779);
-            font-family: 'Montserrat', sans-serif !important;
+        }
+        * {
+            box-sizing: border-box;
         }
 
-        /* 2. TEXTOS DE DATOS Y TABLAS: Usamos Inter */
-        td, th, p, span, input, textarea, select, option, .celda-espaciada {
-            font-family: 'Inter', sans-serif !important;
-        }
-
-        /* 3. TÍTULOS Y BOTONES: Montserrat Bold */
-        h1, h2, h3, h4, .titulo-layout-oficial, .titulo-seccion, button, .sidebar-item, .welcome-title {
-            font-family: 'Montserrat', sans-serif !important;
-            font-weight: 700 !important;
-        }
-
-        /* 4. COMPONENTES ESPECÍFICOS (Chat e Interfaz) */
-        .chat-ia-input, .chat-ia-bubble, .menu-desplegable, strong {
-            font-family: 'Montserrat', sans-serif !important;
-        }
-
-        /* --- ESTILOS DE CONTENEDORES --- */
         .welcome-container {
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
+            width: 100%;
             background-color: #1D2C57;
             color: white;
             text-align: center;
+        }
+        
+        .welcome-title { font-size: 3rem; margin-bottom: 30px; }
+        
+        .auth-container { 
+            background: linear-gradient(to right, #BCBBBA, #777779);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        .app-container {
+            position: relative;
+            min-height: 200vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .login-card {
             display: flex;
             flex-direction: column;
             width: 400px;
+            max-width: 90%;
             background: white;
             border-radius: 10px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -56,22 +57,88 @@ const GlobalStyles = () => (
             overflow: hidden;
         }
 
-            /* Dentro de GlobalStyles.jsx */
-* {
-    box-sizing: border-box;
-    font-family: 'Montserrat', sans-serif !important;
-}
+        .encabezado-img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
 
-/* Solo los TH (encabezados) llevan negrita */
-th {
-    font-family: 'Montserrat', sans-serif !important;
-    font-weight: 700 !important;
-}
+        /* --- ESTILO DE TABLAS REUTILIZABLE --- */
+        .celda-espaciada {
+            line-height: 1.5 !important;
+            padding: 12px 8px !important;
+            vertical-align: middle !important;
+        }
 
-/* Los TD (celdas) NUNCA llevan negrita a menos que lo pidamos */
-td, p, span, input {
-    font-family: 'Inter', sans-serif !important;
-    font-weight: 400 !important; /* Esto quita lo "gordito" de la letra */
+        /* --- AJUSTES DE IMPRESIÓN DINÁMICA --- */
+        @media print {
+            @page {
+                size: landscape; /* Fuerza orientación horizontal */
+                margin: 1cm;
+            }
+
+            body {
+                background: none !important;
+                -webkit-print-color-adjust: exact;
+            }
+
+            /* Evita que las filas se corten entre páginas */
+            tr {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            /* Repite el encabezado de la tabla en cada hoja */
+            thead {
+                display: table-header-group !important;
+            }
+
+            #area-oficial-impresion {
+                width: 100% !important;
+                height: auto !important;
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                display: block !important;
+            }
+
+            .no_imprimir_botones_ia {
+                display: none !important;
+            }
+        }
+
+
+
+        /* --- AJUSTES DE IMPRESIÓN DINÁMICA EN GlobalStyles.jsx --- */
+@media print {
+    @page {
+        size: landscape;
+        /* Definimos un margen inferior para que el footer no se encime con el contenido */
+        margin: 1cm 1cm 3cm 1cm; 
+    }
+
+    /* Contenedor principal de la página de impresión */
+    #area-oficial-impresion {
+        position: relative;
+        min-height: 100%; /* Ocupa todo el alto de la hoja */
+        width: 100% !important;
+        display: block !important;
+    }
+
+    /* Forzamos el footer al límite inferior de CADA hoja */
+    .footer-pdf-fijo {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 2.5cm; /* Ajusta según el tamaño de tu imagen de footer */
+        display: block !important;
+    }
+
+    /* Evitamos que el contenido de la tabla se corte de forma extraña */
+    .margin-content-print {
+        padding-bottom: 3cm; /* Espacio de seguridad para no chocar con el footer fijo */
+    }
 }
     `}</style>
 );

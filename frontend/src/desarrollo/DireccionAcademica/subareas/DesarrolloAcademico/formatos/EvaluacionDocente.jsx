@@ -4,9 +4,6 @@ import useExport from '../../../../../hooks/useExport';
 import { Colors, Assets, Typography } from '../../../../../components/generalStyle/StylesConfig';
 import { fetchEvaluaciones, saveEvaluacion } from '../../../../../api/firebaseService';
 
-// IMPORTACIÓN DEL HOOK DE LÓGICA DE TABLA
-import { useTableLogic } from '../../../../../hooks/useTableLogic';
-
 // IMPORTACIÓN DE TODOS LOS COMPONENTES REUTILIZABLES
 import {
   BotonSincronizar,
@@ -15,19 +12,16 @@ import {
   BotonNuevaColumna
 } from '../../../../../components/BotonesTablas';
 
-// IMPORTACIÓN DEL MODAL DE IA
-import ModalCargaIA from '../../../../../components/Estractor/EstractorIA';
-
 const EvaluacionDocente = () => {
   const { periodoId } = useParams();
   const [datos, setDatos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actualizando, setActualizando] = useState(false);
-  const [modalIAOpen, setModalIAOpen] = useState(false);
 
   const { exportToPDF, exportToExcel } = useExport();
   const periodoActual = periodoId || "Septiembre 2025 – Febrero 2026";
 
+  // LISTA BASE DE PROGRAMAS
   const programasBase = [
     "INGENIERÍA ELECTROMECÁNICA IEME-2010-210", "INGENIERÍA INDUSTRIAL IIND-2010-227",
     "INGENIERÍA INDUSTRIAL IIND-2010-227. EXTENSIÓN ACULCO", "INGENIERÍA EN SISTEMAS COMPUTACIONALES ISIC-2010-224",
@@ -41,20 +35,14 @@ const EvaluacionDocente = () => {
 
   const [columnasExtra, setColumnasExtra] = useState([]);
 
-  // Lógica de tabla
-  const { handleKeyDown, handleBlurCell } = useTableLogic(datos, setDatos, 3 + columnasExtra.length);
-
   useEffect(() => {
     const handlePDF = () => exportToPDF('area-oficial-impresion', `Evaluación Docente - ${periodoActual}`);
     const handleExcel = () => exportToExcel(datos, `Evaluación Docente - ${periodoActual}`);
-    const handleIA = () => setModalIAOpen(true);
     window.addEventListener('descargar-pdf-global', handlePDF);
     window.addEventListener('descargar-excel-global', handleExcel);
-    window.addEventListener('extraer-ia-global', handleIA);
     return () => {
       window.removeEventListener('descargar-pdf-global', handlePDF);
       window.removeEventListener('descargar-excel-global', handleExcel);
-      window.removeEventListener('extraer-ia-global', handleIA);
     };
   }, [datos, periodoActual]);
 
@@ -81,6 +69,7 @@ const EvaluacionDocente = () => {
     cargarDatos();
   }, [periodoActual]);
 
+  // --- ACCIONES DE LOS NUEVOS BOTONES ---
   const agregarFila = () => {
     const nuevoPrograma = prompt("Ingrese el nombre del programa académico adicional:");
     if (nuevoPrograma) {
@@ -119,25 +108,7 @@ const EvaluacionDocente = () => {
     finally { setActualizando(false); }
   };
 
-  const handleIADataSuccess = (datosIA) => {
-    const nuevosDatos = datos.map(fila => {
-      const match = datosIA.find(d =>
-        d.programaAcademico?.trim().toUpperCase() === fila.programaAcademico?.trim().toUpperCase()
-      );
-      if (match) {
-        return {
-          ...fila,
-          calificacion: Number(match.calificacion) || 0,
-          totalDocentes: Number(match.totalDocentes) || 0
-        };
-      }
-      return fila;
-    });
-    setDatos(nuevosDatos);
-    setModalIAOpen(false);
-    alert("Datos extraídos y aplicados a la tabla.");
-  };
-
+  // CÁLCULOS DE TOTALES
   const totalDocentesDoc = datos.reduce((acc, curr) => acc + (Number(curr.totalDocentes) || 0), 0);
   const calificacionesValidas = datos.map(d => Number(d.calificacion)).filter(v => v > 0);
   const promedioGral = calificacionesValidas.length > 0
@@ -147,21 +118,14 @@ const EvaluacionDocente = () => {
   if (loading) return <div style={{ textAlign: 'center', padding: '50px' }}>Cargando datos...</div>;
 
   return (
-    <div className="container">
+    <div className="container" style={{ fontFamily: Typography.principal }}>
       <style>
         {`
           @media screen { .solo-pdf-captura { position: absolute; left: -9999px; } }
           .no_imprimir_botones_ia { display: flex; }
-          td[contenteditable="true"]:focus { background-color: ${Colors.accent || '#fff9c4'} !important; outline: none; }
+          td[contenteditable="true"]:focus { background-color: #fff9c4 !important; outline: none; }
         `}
       </style>
-
-      {modalIAOpen && (
-        <ModalCargaIA
-          onClose={() => setModalIAOpen(false)}
-          onSuccess={handleIADataSuccess}
-        />
-      )}
 
       <div id="area-oficial-impresion" style={styles.pageWrapper}>
         <div className="solo-pdf-captura" style={styles.fullImageContainer}>
@@ -188,51 +152,28 @@ const EvaluacionDocente = () => {
                 </tr>
               </thead>
               <tbody>
-                {datos.map((item, index) => {
-                  if (!item.programaAcademico || item.programaAcademico.trim() === "") return null;
-
-                  return (
-                    <tr key={item.id || index} style={{ borderBottom: '1px solid #eee' }}>
-                      <td style={styles.tdNombre}>{item.programaAcademico}</td>
-
-                      <td
-                        style={styles.td}
-                        contentEditable
-                        suppressContentEditableWarning
-                        tabIndex={0}
-                        onKeyDown={(e) => handleKeyDown(e, index, 1)}
-                        onBlur={(e) => handleBlurCell(index, 'calificacion', Number(e.target.innerText) || 0)}
-                      >
-                        {item.calificacion}
-                      </td>
-
-                      <td
-                        style={styles.td}
-                        contentEditable
-                        suppressContentEditableWarning
-                        tabIndex={0}
-                        onKeyDown={(e) => handleKeyDown(e, index, 2)}
-                        onBlur={(e) => handleBlurCell(index, 'totalDocentes', Number(e.target.innerText) || 0)}
-                      >
-                        {item.totalDocentes}
-                      </td>
-
-                      {columnasExtra.map((col, colIdx) => (
-                        <td
-                          key={col.key}
-                          style={styles.td}
-                          contentEditable
-                          suppressContentEditableWarning
-                          tabIndex={0}
-                          onKeyDown={(e) => handleKeyDown(e, index, 3 + colIdx)}
-                          onBlur={(e) => handleBlurCell(index, col.key, e.target.innerText)}
-                        >
-                          {item[col.key]}
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })}
+                {datos.map((item, index) => (
+                  <tr key={item.id || index} style={{ borderBottom: '1px solid #eee' }}>
+                    <td style={styles.tdNombre}>{item.programaAcademico}</td>
+                    <td style={styles.td} contentEditable suppressContentEditableWarning onBlur={(e) => {
+                      const nuevos = [...datos];
+                      nuevos[index].calificacion = Number(e.target.innerText) || 0;
+                      setDatos(nuevos);
+                    }}>{item.calificacion}</td>
+                    <td style={styles.td} contentEditable suppressContentEditableWarning onBlur={(e) => {
+                      const nuevos = [...datos];
+                      nuevos[index].totalDocentes = Number(e.target.innerText) || 0;
+                      setDatos(nuevos);
+                    }}>{item.totalDocentes}</td>
+                    {columnasExtra.map(col => (
+                      <td key={col.key} style={styles.td} contentEditable suppressContentEditableWarning onBlur={(e) => {
+                        const nuevos = [...datos];
+                        nuevos[index][col.key] = e.target.innerText;
+                        setDatos(nuevos);
+                      }}>{item[col.key]}</td>
+                    ))}
+                  </tr>
+                ))}
               </tbody>
               <tfoot>
                 <tr style={{ backgroundColor: '#f0f4f8', fontWeight: 'bold' }}>
@@ -251,12 +192,17 @@ const EvaluacionDocente = () => {
             </table>
           </div>
 
+          {/* BOTONERA COMPLETA DE CUATRO ELEMENTOS */}
           <div className="no_imprimir_botones_ia" style={{ justifyContent: 'center', gap: '20px', marginTop: '30px' }}>
             <BotonLimpiar onClick={handleLimpiarTabla} />
             <BotonNuevaColumna onClick={handleAgregarColumna} />
             <BotonAgregar onClick={agregarFila} />
             <BotonSincronizar onClick={handleSincronizar} loading={actualizando} />
           </div>
+        </div>
+
+        <div className="solo-pdf-captura" style={styles.fullImageContainerFooter}>
+          <img src={Assets.footer} alt="Footer" style={styles.fullWidthImg} />
         </div>
       </div>
     </div>
@@ -266,17 +212,18 @@ const EvaluacionDocente = () => {
 const styles = {
   pageWrapper: { backgroundColor: 'white', width: '100%', maxWidth: '1100px', margin: '0 auto', display: 'flex', flexDirection: 'column', minHeight: '297mm', position: 'relative', boxShadow: '0 0 15px rgba(0,0,0,0.1)' },
   fullImageContainer: { width: '100%' },
+  fullImageContainerFooter: { width: '100%', marginTop: 'auto' },
   marginContent: { padding: '20px 2cm', flex: 1, display: 'flex', flexDirection: 'column' },
   fullWidthImg: { width: '100%', display: 'block' },
   contentHeader: { textAlign: 'center', marginBottom: '20px' },
-  titlePrincipal: { ...Typography.titlePrincipal, margin: '0' },
-  subtitlePeriodo: { ...Typography.subtitlePeriodo },
-  divider: { height: '3px', backgroundColor: Colors.barraTitulo || '#00264D', width: '100%', marginTop: '10px' },
-  tableContainer: { border: `1px solid ${Colors.border || '#ccc'}`, borderRadius: '4px', overflow: 'hidden' },
+  titlePrincipal: { margin: '0', fontSize: '1.4rem', fontWeight: 'bold' },
+  subtitlePeriodo: { fontSize: '1rem', color: '#333' },
+  divider: { height: '3px', backgroundColor: '#00264D', width: '100%', marginTop: '10px' },
+  tableContainer: { border: '1px solid #ccc', borderRadius: '4px', overflow: 'hidden' },
   table: { width: '100%', borderCollapse: 'collapse' },
-  th: { ...Typography.tableHeader, padding: '12px', textAlign: 'center', borderRight: '1px solid rgba(255,255,255,0.1)' },
-  tdNombre: { ...Typography.tableCell, padding: '10px 12px', textAlign: 'left', borderRight: '1px solid #eee', fontWeight: '400' },
-  td: { ...Typography.tableCell, padding: '10px', textAlign: 'center', outline: 'none', borderRight: '1px solid #eee', fontWeight: '400' }
+  th: { padding: '12px', textAlign: 'center', fontSize: '0.75rem', borderRight: '1px solid rgba(255,255,255,0.1)' },
+  tdNombre: { padding: '10px 12px', fontSize: '0.7rem', textAlign: 'left', borderRight: '1px solid #eee' },
+  td: { padding: '10px', textAlign: 'center', fontSize: '0.8rem', outline: 'none', borderRight: '1px solid #eee' }
 };
 
 export default EvaluacionDocente;
