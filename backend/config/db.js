@@ -1,8 +1,13 @@
 const admin = require('firebase-admin');
-const path = require('path');
 
-// 1. Cargamos la llave primero
-const serviceAccount = require(path.join(__dirname, 'serviceAccountKey.json'));
+// 1. Cargamos la llave dinámicamente desde la variable de entorno de Render
+let serviceAccount;
+try {
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+} catch (error) {
+    console.error('❌ Error fatal al parsear la variable FIREBASE_SERVICE_ACCOUNT:', error.message);
+    process.exit(1);
+}
 
 // 2. Inicializamos Firebase DE INMEDIATO (fuera de la función)
 // Esto asegura que 'db' no sea nulo cuando las rutas lo necesiten
