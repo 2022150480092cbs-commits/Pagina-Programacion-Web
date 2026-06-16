@@ -1,6 +1,6 @@
-<<<<<<< HEAD
+// frontend/src/components/Header.jsx
 import React, { useState } from 'react';
-import { auth } from '../api/firebaseService';
+import { auth } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 import { Assets } from './generalStyle/StylesConfig';
 
@@ -78,7 +78,6 @@ const Header = () => {
                     style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
                 >
                     <div style={{ textAlign: 'right', color: 'white', lineHeight: '1' }}>
-                        {/* Muestra "Hola [Nombre]" si está logueado, o "Invitado" */}
                         <span style={{ fontSize: '12px', fontWeight: 'bold', display: 'block' }}>
                             {globalUser ? `Hola, ${displayName}` : displayName}
                         </span>
@@ -111,7 +110,6 @@ const Header = () => {
     );
 };
 
-// Estilos estáticos se quedan exactamente igual abajo...
 const buttonStyle = (bg) => ({
     width: '38px',
     height: '38px',
@@ -146,47 +144,4 @@ const menuItemStyle = {
     transition: 'background 0.2s',
 };
 
-=======
-// frontend/src/components/Header.jsx
-
-import React from 'react';
-
-// Las rutas de las imágenes deben apuntar a la carpeta 'public'
-const HEADER_IMG_SRC = "/assets/header-bg.png"; // Imagen principal del encabezado
-const LOGO_MINI_SRC = "/assets/tesjo-logo.png";  // Logo pequeño de la esquina
-const FOOTER_IMG_SRC = "/assets/pagg.png";
-/**
- * Componente Header reutilizable que se inserta en Layout.jsx.
- * Hereda los estilos globales definidos en GlobalStyles.jsx.
- */
-const Header = () => {
-    return (
-        <header className="top-bar" style={{ position: 'relative', zIndex: 1000 }}>
-            {/* Imagen de fondo base */}
-            <img src={HEADER_IMG_SRC} alt="Fondo del Encabezado" className="encabezado-img" style={{ width: '100%', display: 'block' }} />
-
-            {/* Contenido superpuesto */}
-            <div
-                className="header-content-overlay"
-                style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '0 20px',
-                    boxSizing: 'border-box',
-                    pointerEvents: 'none' // IMPORTANTE: Esto permite que los clics pasen a través del overlay hacia los inputs
-                }}
-            >
-
-            </div>
-        </header>
-    );
-};
-
->>>>>>> 7f1ff6d3021cbcb1e9200bb55217ff084971735e
 export default Header;
