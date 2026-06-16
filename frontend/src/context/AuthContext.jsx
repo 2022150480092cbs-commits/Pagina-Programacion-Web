@@ -1,34 +1,31 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-// Importaciones necesarias de Firebase SDK
-import { auth, db } from '../api/firebaseConfig'; // Verifica que esta ruta sea correcta en tu PC
-import { createUserWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
+// Añadimos updateProfile a las importaciones de auth
+import { auth, db } from '../api/firebaseConfig';
+import { createUserWithEmailAndPassword, onAuthStateChanged, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+
 
 const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-    // Cambiamos isAuthenticated por user para que coincida con lo que espera App.js
+
     const [user, setUser] = useState(null);
-    // Cambiamos isLoading por loading (o mantenemos ambos, pero App.js busca 'loading')
     const [loading, setLoading] = useState(true);
 
-    // --- OBSERVADOR DE ESTADO DE AUTENTICACIÓN ---
-    // Este efecto es el que evita el bucle de redirección
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
-            setLoading(false); // Detiene el estado de carga una vez que Firebase responde
+            setLoading(false);
         });
         return () => unsubscribe();
     }, []);
 
-    // Función de REGISTRO REAL con FIREBASE
     const register = async (userData) => {
         setLoading(true);
         try {
-            // 1. Crear el usuario en Firebase Authentication (Email y Password)
+            // 1. Crear el usuario en Firebase Authentication
             const userCredential = await createUserWithEmailAndPassword(
                 auth,
                 userData.email,
@@ -37,7 +34,12 @@ export const AuthProvider = ({ children }) => {
 
             const userFirebase = userCredential.user;
 
-            // 2. Guardar los datos adicionales en Firestore (Nombre, Área, Subárea, Teléfono)
+            // 🔥 NUEVO: Guardamos el nombre real directamente en el perfil nativo de Firebase Auth
+            await updateProfile(userFirebase, {
+                displayName: userData.name // Aquí se enlaza tu campo "name"
+            });
+
+            // 2. Guardar los datos adicionales en Firestore
             await setDoc(doc(db, "users", userFirebase.uid), {
                 uid: userFirebase.uid,
                 name: userData.name,
@@ -50,7 +52,7 @@ export const AuthProvider = ({ children }) => {
                 createdAt: new Date()
             });
 
-            console.log("Registro exitoso en Firebase y Firestore.");
+            console.log("Registro exitoso en Firebase y Firestore con Perfil Actualizado.");
             return userFirebase;
 
         } catch (error) {
@@ -69,13 +71,12 @@ export const AuthProvider = ({ children }) => {
     };
 
     const login = async (credentials) => {
-        // La lógica de signIn se maneja en tu LoginForm, 
-        // onAuthStateChanged detectará el cambio automáticamente aquí.
+        // Manejado en LoginForm
     };
 
     const value = {
-        user,        // Exportamos el usuario real
-        loading,     // Exportamos el estado de carga que App.js necesita
+        user,
+        loading,
         register,
         login,
     };

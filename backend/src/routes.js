@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 // Importamos la conexión REAL de Firebase desde la carpeta config
-const { db } = require("../config/db"); 
+const { db } = require("../config/db");
 
 // Ruta para obtener usuarios desde Firestore
 router.get("/users", async (req, res) => {

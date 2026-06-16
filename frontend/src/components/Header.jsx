@@ -1,37 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { auth } from '../api/firebaseService'; // Asegúrate que la ruta sea correcta
-import { onAuthStateChanged } from 'firebase/auth';
- 
-// Si la carpeta generalStyle está DENTRO de la carpeta components
+import React, { useState } from 'react';
+import { auth } from '../api/firebaseService';
+import { useAuth } from '../context/AuthContext';
 import { Assets } from './generalStyle/StylesConfig';
-
-
 
 const HEADER_IMG_SRC = "/assets/header-bg.png";
 
 const Header = () => {
-    // Estado para el usuario dinámico
-    const [user, setUser] = useState({
-        displayName: 'Invitado',
-        photoURL: Assets.avatarDefault
-    });
+    // Escuchamos el estado global del AuthContext
+    const { user: globalUser } = useAuth();
     const [showMenu, setShowMenu] = useState(false);
 
-    useEffect(() => {
-        // Suscripción al estado de autenticación de Firebase
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            if (currentUser) {
-                setUser({
-                    displayName: currentUser.displayName || currentUser.email.split('@')[0],
-                    photoURL: currentUser.photoURL || Assets.avatarDefault
-                });
-            } else {
-                setUser({ displayName: 'Invitado', photoURL: Assets.avatarDefault });
-            }
-        });
-
-        return () => unsubscribe(); // Limpieza al desmontar el componente
-    }, []);
+    // Definimos qué mostrar basándonos en el usuario global
+    const displayName = globalUser ? (globalUser.displayName || globalUser.email.split('@')[0]) : 'Invitado';
+    const photoURL = globalUser?.photoURL || Assets.avatarDefault;
 
     const handleAIClick = () => {
         window.dispatchEvent(new CustomEvent('extraer-ia-global'));
@@ -90,17 +71,22 @@ const Header = () => {
                     </svg>
                 </div>
 
-                {/* PERFIL DE USUARIO DINÁMICO */}
+                {/* PERFIL DE USUARIO ENLAZADO Y DINÁMICO */}
                 <div
                     onClick={() => setShowMenu(!showMenu)}
                     style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
                 >
                     <div style={{ textAlign: 'right', color: 'white', lineHeight: '1' }}>
-                        <span style={{ fontSize: '12px', fontWeight: 'bold', display: 'block' }}>{user.displayName}</span>
-                        <span style={{ fontSize: '10px', opacity: '0.8' }}>En línea</span>
+                        {/* Muestra "Hola [Nombre]" si está logueado, o "Invitado" */}
+                        <span style={{ fontSize: '12px', fontWeight: 'bold', display: 'block' }}>
+                            {globalUser ? `Hola, ${displayName}` : displayName}
+                        </span>
+                        <span style={{ fontSize: '10px', opacity: '0.8' }}>
+                            {globalUser ? 'En línea' : 'Desconectado'}
+                        </span>
                     </div>
                     <img
-                        src={user.photoURL}
+                        src={photoURL}
                         alt="Avatar"
                         style={{ width: '40px', height: '40px', borderRadius: '50%', border: '2px solid white', objectFit: 'cover' }}
                     />
@@ -109,10 +95,12 @@ const Header = () => {
                     {showMenu && (
                         <div style={menuStyle}>
                             <div style={{ padding: '10px', borderBottom: '1px solid #eee', fontWeight: 'bold', color: '#1c3170' }}>
-                                {user.displayName}
+                                {displayName}
                             </div>
                             <div style={menuItemStyle}>⚙️ Configuración</div>
-                            <div onClick={handleLogout} style={{ ...menuItemStyle, color: 'red' }}>🚪 Cerrar Sesión</div>
+                            {globalUser && (
+                                <div onClick={handleLogout} style={{ ...menuItemStyle, color: 'red' }}>🚪 Cerrar Sesión</div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -122,7 +110,7 @@ const Header = () => {
     );
 };
 
-// Estilos reutilizables
+// Estilos estáticos se quedan exactamente igual abajo...
 const buttonStyle = (bg) => ({
     width: '38px',
     height: '38px',
@@ -155,7 +143,6 @@ const menuItemStyle = {
     color: '#333',
     cursor: 'pointer',
     transition: 'background 0.2s',
-    '&:hover': { background: '#f5f5f5' }
 };
 
 export default Header;
